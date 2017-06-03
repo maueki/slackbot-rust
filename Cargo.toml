@@ -1,0 +1,6 @@
+[package]
+name = "slackbot-rust"
+version = "0.1.0"
+authors = ["papamitra <papamitra@gmail.com>"]
+
+[dependencies]
