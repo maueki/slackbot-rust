@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["papamitra <papamitra@gmail.com>"]
 
 [dependencies]
+mio = "0.6"
+hyper = "0.10"
+hyper-native-tls = "*"
