@@ -10,6 +10,8 @@ use hyper::net::HttpsConnector;
 use hyper_native_tls::NativeTlsClient;
 
 use std::env;
+use serde_json;
+use serde_json::{Value, Error};
 
 pub fn get(method: &str) -> String {
 
@@ -26,8 +28,11 @@ pub fn get(method: &str) -> String {
 
     let mut buf =  String::new();
     res.read_to_string(&mut buf).unwrap();
+    let team_state: Value = serde_json::from_str(&buf).unwrap();
 
-    println!("res = {:?}", buf);
+    let ws_url = &team_state["url"];
+
+    println!("ws_url = {:?}", ws_url);
 
     return "hoge".to_string();
 }
