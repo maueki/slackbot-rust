@@ -4,14 +4,13 @@ const API_URL: &'static str = "https://slack.com/api/";
 use std::io::Read;
 
 use hyper::Url;
-use hyper::client::*;
 use hyper::Client;
 use hyper::net::HttpsConnector;
 use hyper_native_tls::NativeTlsClient;
 
 use std::env;
 use serde_json;
-use serde_json::{Value, Error};
+use serde_json::{Value};
 
 pub fn get(method: &str) -> String {
 
@@ -32,7 +31,5 @@ pub fn get(method: &str) -> String {
 
     let ws_url = &team_state["url"];
 
-    println!("ws_url = {:?}", ws_url);
-
-    return "hoge".to_string();
+    return ws_url.to_string().replace("\"", "");
 }
