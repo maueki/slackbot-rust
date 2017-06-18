@@ -13,7 +13,9 @@ use tokio_core::reactor::Core;
 use websocket::{ClientBuilder, OwnedMessage};
 use futures::future::{Future, IntoFuture};
 use futures::stream::Stream;
+use futures::sink::Sink;
 use serde_json::{Value};
+use futures::sync::mpsc;
 
 mod web_api;
 
@@ -24,17 +26,19 @@ fn main() {
 
     println!("Connect to {:?}", uri);
 
+    let (msg_sender, msg_receiver) = mpsc::channel::<OwnedMessage>(0);
+
     let runner = ClientBuilder::new(&uri)
         .unwrap()
         .async_connect_secure(None, &core.handle())
         .and_then(|(duplex, _)| {
             let (sink, stream) = duplex.split();
-            stream.filter_map(|message| {
+            stream.filter_map(move |message| {
                 println!("Received Message: {:?}", message);
                 match message {
                     OwnedMessage::Close(e) => Some(OwnedMessage::Close(e)),
                     OwnedMessage::Ping(d) => Some(OwnedMessage::Pong(d)),
-                    OwnedMessage::Text(t) => reply_message(&t),
+                    OwnedMessage::Text(t) => dispatch_message(&t, msg_sender.clone()),
                     _ => None,
                 }
             })
@@ -44,12 +48,17 @@ fn main() {
     core.run(runner).unwrap();
 }
 
-fn reply_message(msg: &String) -> Option<OwnedMessage> {
+fn dispatch_message(msg: &String, mut sender: mpsc::Sender<OwnedMessage>) -> Option<OwnedMessage> {
     let val: Value = serde_json::from_str(&msg).unwrap();
     match val["type"].to_string().as_ref() {
-        r#""message""# => Some(OwnedMessage::Text(json!({
-            "type": "message",
-            "text": val["text"],
-            "channel": val["channel"]}).to_string())),
-        _ => None}
+        r#""message""# => {
+            let json = OwnedMessage::Text(json!({
+                "type": "message",
+                "text": val["text"],
+                "channel": val["channel"]}).to_string());
+            sender.send(json);
+            None
+        },
+        _ => None
+    }
 }
