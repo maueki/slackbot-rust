@@ -10,7 +10,7 @@ extern crate futures;
 extern crate tokio_core;
 
 use tokio_core::reactor::Core;
-use websocket::{ClientBuilder, OwnedMessage};
+use websocket::{ClientBuilder, OwnedMessage, WebSocketError};
 use futures::future::{Future, IntoFuture};
 use futures::stream::Stream;
 use futures::sink::Sink;
@@ -42,6 +42,7 @@ fn main() {
                     _ => None,
                 }
             })
+                .select(msg_receiver.map_err(|_| WebSocketError::NoDataAvailable))
                 .forward(sink)
         });
 
